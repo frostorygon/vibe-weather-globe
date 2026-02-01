@@ -135,61 +135,22 @@ function createStars() {
 
 function createEarth() {
     const geometry = new THREE.SphereGeometry(1, 64, 64);
+    const textureLoader = new THREE.TextureLoader();
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
+    // NASA Blue Marble textures
+    const earthTexture = textureLoader.load(
+        'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg'
+    );
+    const bumpTexture = textureLoader.load(
+        'https://unpkg.com/three-globe/example/img/earth-topology.png'
+    );
 
-    // Ocean
-    const oceanGradient = ctx.createLinearGradient(0, 0, 0, 1024);
-    oceanGradient.addColorStop(0, '#0c1929');
-    oceanGradient.addColorStop(0.3, '#1e3a5f');
-    oceanGradient.addColorStop(0.5, '#1e40af');
-    oceanGradient.addColorStop(0.7, '#1e3a5f');
-    oceanGradient.addColorStop(1, '#0c1929');
-    ctx.fillStyle = oceanGradient;
-    ctx.fillRect(0, 0, 2048, 1024);
-
-    // Continents
-    function drawContinent(baseX, baseY, complexity, baseSize) {
-        const gradient = ctx.createRadialGradient(baseX, baseY, 0, baseX, baseY, baseSize);
-        gradient.addColorStop(0, '#22c55e');
-        gradient.addColorStop(0.5, '#16a34a');
-        gradient.addColorStop(0.8, '#15803d');
-        gradient.addColorStop(1, '#166534');
-        ctx.fillStyle = gradient;
-
-        for (let layer = 0; layer < complexity; layer++) {
-            ctx.beginPath();
-            const points = 12 + layer * 3;
-            for (let i = 0; i <= points; i++) {
-                const angle = (i / points) * Math.PI * 2;
-                const noiseR = baseSize * (0.6 + Math.random() * 0.4) / (layer * 0.3 + 1);
-                const offsetX = (Math.random() - 0.5) * baseSize * 0.3;
-                const offsetY = (Math.random() - 0.5) * baseSize * 0.3;
-                const px = baseX + offsetX + Math.cos(angle) * noiseR;
-                const py = baseY + offsetY + Math.sin(angle) * noiseR;
-                if (i === 0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
-            }
-            ctx.closePath();
-            ctx.fill();
-        }
-    }
-
-    drawContinent(400, 280, 4, 180);
-    drawContinent(480, 650, 3, 120);
-    drawContinent(1100, 350, 5, 200);
-    drawContinent(1550, 300, 5, 250);
-    drawContinent(1700, 700, 3, 100);
-
-    const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.MeshPhongMaterial({
-        map: texture,
-        bumpScale: 0.02,
-        specular: new THREE.Color(0x222244),
-        shininess: 15
+        map: earthTexture,
+        bumpMap: bumpTexture,
+        bumpScale: 0.05,
+        specular: new THREE.Color(0x333333),
+        shininess: 5
     });
 
     earth = new THREE.Mesh(geometry, material);
@@ -197,32 +158,17 @@ function createEarth() {
 }
 
 function createClouds() {
-    const geometry = new THREE.SphereGeometry(1.025, 64, 64);
+    const geometry = new THREE.SphereGeometry(1.02, 64, 64);
+    const textureLoader = new THREE.TextureLoader();
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, 2048, 1024);
+    const cloudTexture = textureLoader.load(
+        'https://unpkg.com/three-globe/example/img/earth-clouds.png'
+    );
 
-    for (let band = 0; band < 8; band++) {
-        const y = 100 + band * 120;
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.15 + Math.random() * 0.1})`;
-        for (let i = 0; i < 40; i++) {
-            const x = Math.random() * 2048;
-            const w = Math.random() * 200 + 50;
-            const h = Math.random() * 40 + 10;
-            ctx.beginPath();
-            ctx.ellipse(x, y + (Math.random() - 0.5) * 60, w, h, 0, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.MeshPhongMaterial({
-        map: texture,
+        map: cloudTexture,
         transparent: true,
-        opacity: 0.6,
+        opacity: 0.35,
         depthWrite: false,
         side: THREE.DoubleSide
     });
