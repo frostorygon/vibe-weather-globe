@@ -330,11 +330,13 @@ async function fetchWeather(cityName) {
         const data = await response.json();
 
         updateWeatherCard(data);
-        updateSelectedMarker(cityName);
 
-        const city = MAJOR_CITIES.find(c => c.name.toLowerCase() === cityName.toLowerCase());
-        if (city) flyToCity(city.lat, city.lon);
-        else if (data.coord) flyToCity(data.coord.lat, data.coord.lon);
+        // Use API's returned name for accurate matching
+        const apiCityName = data.name;
+        updateSelectedMarker(apiCityName);
+
+        // Fly to city coordinates from API (always accurate)
+        flyToCity(data.coord.lat, data.coord.lon);
 
     } catch (error) {
         console.error(error);
