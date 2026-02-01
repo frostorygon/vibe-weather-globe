@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Weather Globe 🌍</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <h1>🌍 Weather Globe</h1>
+        <div class="search-box">
+            <input type="text" id="cityInput" placeholder="Search city..." autocomplete="off">
+            <button id="searchBtn">🔍</button>
+        </div>
+        <div class="quick-cities">
+            <button data-city="Tokyo">Tokyo</button>
+            <button data-city="London">London</button>
+            <button data-city="New York">New York</button>
+            <button data-city="Manila">Manila</button>
+            <button data-city="Sydney">Sydney</button>
+        </div>
+    </div>
+
+    <!-- Weather Info Card -->
+    <div class="weather-card" id="weatherCard">
+        <div class="weather-header">
+            <span class="city-name" id="cityName">Select a city</span>
+            <span class="weather-icon" id="weatherIcon">🌐</span>
+        </div>
+        <div class="weather-temp" id="weatherTemp">--°C</div>
+        <div class="weather-desc" id="weatherDesc">Click on the globe or search</div>
+        <div class="weather-details">
+            <div class="detail">
+                <span class="label">Humidity</span>
+                <span class="value" id="humidity">--%</span>
+            </div>
+            <div class="detail">
+                <span class="label">Wind</span>
+                <span class="value" id="wind">-- m/s</span>
+            </div>
+            <div class="detail">
+                <span class="label">Feels Like</span>
+                <span class="value" id="feelsLike">--°C</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <span>Loading weather data...</span>
+    </div>
+
+    <!-- Three.js Container -->
+    <div id="globe-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
