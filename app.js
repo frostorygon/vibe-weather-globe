@@ -394,8 +394,17 @@ function latLonToVector3(lat, lon, radius) {
 }
 
 function flyToCity(lat, lon) {
-    const targetPosition = latLonToVector3(lat, lon, 3.5);
-    const startPosition = camera.position.clone();
+    // Stop auto-rotation during animation
+    isAnimating = false;
+
+    // Calculate target rotation for Earth so the city faces the camera
+    // Convert lon to Earth's Y rotation (longitude = rotation around Y axis)
+    const targetRotationY = -lon * (Math.PI / 180) - Math.PI / 2;
+
+    const startRotationY = earth.rotation.y;
+    const startCameraZ = camera.position.z;
+    const targetCameraZ = 3.0; // Zoom in slightly
+
     const duration = 1500;
     const startTime = Date.now();
 
@@ -403,9 +412,20 @@ function flyToCity(lat, lon) {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
-        camera.position.lerpVectors(startPosition, targetPosition, eased);
+
+        // Rotate Earth to face the city
+        earth.rotation.y = startRotationY + (targetRotationY - startRotationY) * eased;
+
+        // Optionally zoom camera
+        camera.position.z = startCameraZ + (targetCameraZ - startCameraZ) * eased;
         camera.lookAt(0, 0, 0);
-        if (progress < 1) requestAnimationFrame(animateFly);
+
+        if (progress < 1) {
+            requestAnimationFrame(animateFly);
+        } else {
+            // Resume auto-rotation after a delay
+            setTimeout(() => { isAnimating = true; }, 3000);
+        }
     }
     animateFly();
 }
