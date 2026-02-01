@@ -1,64 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vibe Weather Globe 🌍</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <!-- Control Panel -->
-    <div class="control-panel">
-        <h1>🌍 Weather Globe</h1>
-        <div class="search-box">
-            <input type="text" id="cityInput" placeholder="Search city..." autocomplete="off">
-            <button id="searchBtn">🔍</button>
-        </div>
-        <div class="quick-cities">
-            <button data-city="Tokyo">Tokyo</button>
-            <button data-city="London">London</button>
-            <button data-city="New York">New York</button>
-            <button data-city="Manila">Manila</button>
-            <button data-city="Sydney">Sydney</button>
-        </div>
-    </div>
-
-    <!-- Weather Info Card -->
-    <div class="weather-card" id="weatherCard">
-        <div class="weather-header">
-            <span class="city-name" id="cityName">Select a city</span>
-            <span class="weather-icon" id="weatherIcon">🌐</span>
-        </div>
-        <div class="weather-temp" id="weatherTemp">--°C</div>
-        <div class="weather-desc" id="weatherDesc">Click on the globe or search</div>
-        <div class="weather-details">
-            <div class="detail">
-                <span class="label">Humidity</span>
-                <span class="value" id="humidity">--%</span>
-            </div>
-            <div class="detail">
-                <span class="label">Wind</span>
-                <span class="value" id="wind">-- m/s</span>
-            </div>
-            <div class="detail">
-                <span class="label">Feels Like</span>
-                <span class="value" id="feelsLike">--°C</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Indicator -->
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <span>Loading weather data...</span>
-    </div>
-
-    <!-- Three.js Container -->
+    <!-- 3D Globe Container -->
     <div id="globe-container"></div>
 
-    <!-- Scripts -->
+    <!-- Search Bar (Top Center) -->
+    <div class="search-container">
+        <div class="search-wrapper">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" id="cityInput" placeholder="Search location..." autocomplete="off">
+        </div>
+    </div>
+
+    <!-- Weather Card (Right Side) -->
+    <div id="weatherCard" class="weather-card">
+        <div class="card-connector"></div>
+        <div class="card-content">
+            <div class="city-header">
+                <h2 id="cityName">Select a city</h2>
+                <div class="coords" id="coords">
+                    <span class="material-symbols-outlined">my_location</span>
+                    <span id="coordsText">--</span>
+                </div>
+            </div>
+
+            <div class="temp-row">
+                <span id="weatherTemp" class="temp">--°</span>
+                <span id="weatherDesc" class="condition">--</span>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Humidity</span>
+                    <div class="detail-value">
+                        <span class="material-symbols-outlined">water_drop</span>
+                        <span id="humidity">--%</span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Wind</span>
+                    <div class="detail-value">
+                        <span class="material-symbols-outlined">air</span>
+                        <span id="wind">-- <small>m/s</small></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Pressure</span>
+                    <div class="detail-value">
+                        <span class="material-symbols-outlined">compress</span>
+                        <span id="pressure">-- <small>hPa</small></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Visibility</span>
+                    <div class="detail-value">
+                        <span class="material-symbols-outlined">visibility</span>
+                        <span id="visibility">-- <small>km</small></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zoom Controls (Bottom Right) -->
+    <div class="zoom-controls">
+        <button id="zoomIn" aria-label="Zoom In">
+            <span class="material-symbols-outlined">add</span>
+        </button>
+        <button id="zoomOut" aria-label="Zoom Out">
+            <span class="material-symbols-outlined">remove</span>
+        </button>
+        <div class="spacer"></div>
+        <button id="resetView" aria-label="Reset View" class="primary">
+            <span class="material-symbols-outlined">near_me</span>
+        </button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="city-tooltip"></div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>

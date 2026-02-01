@@ -26,13 +26,12 @@ let ambientLight, sunLight;
 let markers = [];
 let raycaster, mouse;
 let isAnimating = true;
-let tooltip;
 let selectedMarker = null;
 
 // DOM Elements
 const cityInput = document.getElementById('cityInput');
-const searchBtn = document.getElementById('searchBtn');
 const loading = document.getElementById('loading');
+const tooltip = document.getElementById('city-tooltip');
 
 // ============================================
 // Initialize Scene
@@ -56,7 +55,7 @@ function init() {
     controls.maxDistance = 6;
     controls.enablePan = false;
 
-    // Lighting (dynamic for weather mood)
+    // Lighting
     ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     scene.add(ambientLight);
 
@@ -66,9 +65,6 @@ function init() {
 
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();
-
-    // Create tooltip element
-    createTooltip();
 
     // Create 3D objects
     createStars();
@@ -82,18 +78,23 @@ function init() {
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('click', onMouseClick);
 
-    searchBtn.addEventListener('click', searchCity);
+    // Search
     cityInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') searchCity();
     });
 
-    document.querySelectorAll('.quick-cities button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            cityInput.value = btn.dataset.city;
-            searchCity();
-        });
+    // Zoom controls
+    document.getElementById('zoomIn').addEventListener('click', () => {
+        camera.position.z = Math.max(camera.position.z - 0.5, 1.5);
+    });
+    document.getElementById('zoomOut').addEventListener('click', () => {
+        camera.position.z = Math.min(camera.position.z + 0.5, 6);
+    });
+    document.getElementById('resetView').addEventListener('click', () => {
+        camera.position.set(0, 0, 3.5);
     });
 
+    // Auto-rotation control
     controls.addEventListener('start', () => { isAnimating = false; });
     let interactionTimeout;
     controls.addEventListener('end', () => {
@@ -102,48 +103,21 @@ function init() {
     });
 
     animate();
-    fetchWeather('Manila');
+    fetchWeather('Tokyo');
 }
 
 // ============================================
-// Tooltip (City Name on Hover)
-// ============================================
-function createTooltip() {
-    tooltip = document.createElement('div');
-    tooltip.id = 'city-tooltip';
-    tooltip.style.cssText = `
-        position: fixed;
-        padding: 6px 12px;
-        background: rgba(15, 23, 42, 0.9);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(96, 165, 250, 0.5);
-        border-radius: 8px;
-        color: #fff;
-        font-size: 13px;
-        font-weight: 500;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s;
-        z-index: 1000;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    `;
-    document.body.appendChild(tooltip);
-}
-
-// ============================================
-// 1. Stars (Brighter, More Depth)
+// 3D Objects
 // ============================================
 function createStars() {
     const geometry = new THREE.BufferGeometry();
     const count = 4000;
     const posArray = new Float32Array(count * 3);
-    const sizeArray = new Float32Array(count);
 
     for (let i = 0; i < count; i++) {
         posArray[i * 3] = (Math.random() - 0.5) * 60;
         posArray[i * 3 + 1] = (Math.random() - 0.5) * 60;
         posArray[i * 3 + 2] = (Math.random() - 0.5) * 60;
-        sizeArray[i] = Math.random() * 0.08 + 0.02;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
@@ -152,17 +126,13 @@ function createStars() {
         size: 0.05,
         color: 0xffffff,
         transparent: true,
-        opacity: 0.9,
-        sizeAttenuation: true
+        opacity: 0.9
     });
 
     stars = new THREE.Points(geometry, material);
     scene.add(stars);
 }
 
-// ============================================
-// 2. Earth (Noise-Based Realistic Texture)
-// ============================================
 function createEarth() {
     const geometry = new THREE.SphereGeometry(1, 64, 64);
 
@@ -171,7 +141,7 @@ function createEarth() {
     canvas.height = 1024;
     const ctx = canvas.getContext('2d');
 
-    // Ocean gradient (deeper blues)
+    // Ocean
     const oceanGradient = ctx.createLinearGradient(0, 0, 0, 1024);
     oceanGradient.addColorStop(0, '#0c1929');
     oceanGradient.addColorStop(0.3, '#1e3a5f');
@@ -181,7 +151,7 @@ function createEarth() {
     ctx.fillStyle = oceanGradient;
     ctx.fillRect(0, 0, 2048, 1024);
 
-    // Simplex-like noise for land (fractal blobs)
+    // Continents
     function drawContinent(baseX, baseY, complexity, baseSize) {
         const gradient = ctx.createRadialGradient(baseX, baseY, 0, baseX, baseY, baseSize);
         gradient.addColorStop(0, '#22c55e');
@@ -208,26 +178,13 @@ function createEarth() {
         }
     }
 
-    // Major landmasses
-    drawContinent(400, 280, 4, 180);   // North America
-    drawContinent(480, 650, 3, 120);   // South America
-    drawContinent(1100, 350, 5, 200);  // Europe/Africa
-    drawContinent(1550, 300, 5, 250);  // Asia
-    drawContinent(1700, 700, 3, 100);  // Australia
-    drawContinent(1000, 900, 2, 60);   // Antarctica bits
-
-    // Small islands
-    for (let i = 0; i < 30; i++) {
-        const x = Math.random() * 2048;
-        const y = Math.random() * 1024;
-        ctx.fillStyle = '#16a34a';
-        ctx.beginPath();
-        ctx.arc(x, y, Math.random() * 15 + 5, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    drawContinent(400, 280, 4, 180);
+    drawContinent(480, 650, 3, 120);
+    drawContinent(1100, 350, 5, 200);
+    drawContinent(1550, 300, 5, 250);
+    drawContinent(1700, 700, 3, 100);
 
     const texture = new THREE.CanvasTexture(canvas);
-
     const material = new THREE.MeshPhongMaterial({
         map: texture,
         bumpScale: 0.02,
@@ -239,9 +196,6 @@ function createEarth() {
     scene.add(earth);
 }
 
-// ============================================
-// 3. Clouds (Fixed Blending + Visibility)
-// ============================================
 function createClouds() {
     const geometry = new THREE.SphereGeometry(1.025, 64, 64);
 
@@ -249,11 +203,8 @@ function createClouds() {
     canvas.width = 2048;
     canvas.height = 1024;
     const ctx = canvas.getContext('2d');
-
-    // Transparent base
     ctx.clearRect(0, 0, 2048, 1024);
 
-    // Wispy cloud bands
     for (let band = 0; band < 8; band++) {
         const y = 100 + band * 120;
         ctx.fillStyle = `rgba(255, 255, 255, ${0.15 + Math.random() * 0.1})`;
@@ -268,7 +219,6 @@ function createClouds() {
     }
 
     const texture = new THREE.CanvasTexture(canvas);
-
     const material = new THREE.MeshPhongMaterial({
         map: texture,
         transparent: true,
@@ -281,11 +231,8 @@ function createClouds() {
     scene.add(clouds);
 }
 
-// ============================================
-// 4. Atmosphere (Brighter Glow)
-// ============================================
 function createAtmosphere() {
-    const geometry = new THREE.SphereGeometry(1.15, 64, 64);
+    const geometry = new THREE.SphereGeometry(1.12, 64, 64);
     const material = new THREE.ShaderMaterial({
         vertexShader: `
             varying vec3 vNormal;
@@ -297,8 +244,8 @@ function createAtmosphere() {
         fragmentShader: `
             varying vec3 vNormal;
             void main() {
-                float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-                gl_FragColor = vec4(0.3, 0.6, 1.0, 1.0) * intensity * 0.8;
+                float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+                gl_FragColor = vec4(0.2, 0.5, 1.0, 1.0) * intensity * 0.7;
             }
         `,
         blending: THREE.AdditiveBlending,
@@ -329,16 +276,16 @@ function createMarker(lat, lon, name) {
     const hitSphere = new THREE.Mesh(hitGeometry, hitMaterial);
     group.add(hitSphere);
 
-    const pinGeometry = new THREE.SphereGeometry(0.025, 16, 16);
-    const pinMaterial = new THREE.MeshBasicMaterial({ color: 0x60a5fa });
+    const pinGeometry = new THREE.SphereGeometry(0.02, 16, 16);
+    const pinMaterial = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
     const pin = new THREE.Mesh(pinGeometry, pinMaterial);
     group.add(pin);
 
-    const ringGeometry = new THREE.RingGeometry(0.035, 0.045, 32);
+    const ringGeometry = new THREE.RingGeometry(0.03, 0.04, 32);
     const ringMaterial = new THREE.MeshBasicMaterial({
-        color: 0x60a5fa,
+        color: 0x22d3ee,
         transparent: true,
-        opacity: 0.7,
+        opacity: 0.6,
         side: THREE.DoubleSide
     });
     const ring = new THREE.Mesh(ringGeometry, ringMaterial);
@@ -347,12 +294,12 @@ function createMarker(lat, lon, name) {
     const pos = latLonToVector3(lat, lon, 1.04);
     group.position.copy(pos);
     group.lookAt(0, 0, 0);
-    group.userData = { name, lat, lon, isMarker: true };
+    group.userData = { name, lat, lon };
     return group;
 }
 
 // ============================================
-// Raycasting & Tooltip
+// Raycasting
 // ============================================
 let hoveredMarker = null;
 
@@ -369,22 +316,22 @@ function onMouseMove(event) {
         hoveredMarker = markerGroup;
         document.body.style.cursor = 'pointer';
 
-        // Show tooltip
         tooltip.textContent = markerGroup.userData.name;
         tooltip.style.left = event.clientX + 15 + 'px';
         tooltip.style.top = event.clientY - 10 + 'px';
         tooltip.style.opacity = '1';
 
-        // Highlight marker
-        markerGroup.children[1].material.color.setHex(0xfbbf24);
+        if (markerGroup !== selectedMarker) {
+            markerGroup.children[1].material.color.setHex(0xffffff);
+        }
     } else {
         document.body.style.cursor = 'default';
         tooltip.style.opacity = '0';
 
-        if (hoveredMarker) {
-            hoveredMarker.children[1].material.color.setHex(0x60a5fa);
-            hoveredMarker = null;
+        if (hoveredMarker && hoveredMarker !== selectedMarker) {
+            hoveredMarker.children[1].material.color.setHex(0x22d3ee);
         }
+        hoveredMarker = null;
     }
 }
 
@@ -407,56 +354,8 @@ function onMouseClick(event) {
 }
 
 // ============================================
-// Weather Mood Lighting
+// Weather
 // ============================================
-function setWeatherMood(condition) {
-    const moods = {
-        'Clear': { ambient: 0xfff4e6, sun: 0xfffaf0, intensity: 1.6 },
-        'Clouds': { ambient: 0x9ca3af, sun: 0xe5e7eb, intensity: 1.0 },
-        'Rain': { ambient: 0x4b5563, sun: 0x93c5fd, intensity: 0.8 },
-        'Snow': { ambient: 0xe0f2fe, sun: 0xffffff, intensity: 1.2 },
-        'Thunderstorm': { ambient: 0x374151, sun: 0x6366f1, intensity: 0.6 },
-        'default': { ambient: 0x404040, sun: 0xffffff, intensity: 1.2 }
-    };
-
-    const mood = moods[condition] || moods['default'];
-    ambientLight.color.setHex(mood.ambient);
-    sunLight.color.setHex(mood.sun);
-    sunLight.intensity = mood.intensity;
-}
-
-// ============================================
-// Selected Marker Highlight
-// ============================================
-function updateSelectedMarker(cityName) {
-    // Reset previous selection
-    if (selectedMarker) {
-        selectedMarker.children[1].material.color.setHex(0x60a5fa);
-        selectedMarker.children[2].material.color.setHex(0x60a5fa);
-    }
-
-    // Find and highlight new selection
-    const found = markers.find(m => m.city.name.toLowerCase() === cityName.toLowerCase());
-    if (found) {
-        selectedMarker = found.mesh;
-        selectedMarker.children[1].material.color.setHex(0xfbbf24); // Gold pin
-        selectedMarker.children[2].material.color.setHex(0xfbbf24); // Gold ring
-    }
-}
-
-// ============================================
-// Utilities
-// ============================================
-function latLonToVector3(lat, lon, radius) {
-    const phi = (90 - lat) * (Math.PI / 180);
-    const theta = (lon + 180) * (Math.PI / 180);
-    return new THREE.Vector3(
-        -radius * Math.sin(phi) * Math.cos(theta),
-        radius * Math.cos(phi),
-        radius * Math.sin(phi) * Math.sin(theta)
-    );
-}
-
 async function fetchWeather(cityName) {
     showLoading(true);
     try {
@@ -467,9 +366,6 @@ async function fetchWeather(cityName) {
         const data = await response.json();
 
         updateWeatherCard(data);
-        setWeatherMood(data.weather[0].main);
-
-        // Update selected marker
         updateSelectedMarker(cityName);
 
         const city = MAJOR_CITIES.find(c => c.name.toLowerCase() === cityName.toLowerCase());
@@ -485,26 +381,52 @@ async function fetchWeather(cityName) {
 }
 
 function updateWeatherCard(data) {
-    document.getElementById('cityName').textContent = data.name;
-    document.getElementById('weatherTemp').textContent = `${Math.round(data.main.temp)}°C`;
+    document.getElementById('cityName').textContent = `${data.name}, ${data.sys.country}`;
+    document.getElementById('weatherTemp').textContent = `${Math.round(data.main.temp)}°`;
     document.getElementById('weatherDesc').textContent = data.weather[0].description;
-    document.getElementById('weatherIcon').textContent = getWeatherEmoji(data.weather[0].main);
-    document.getElementById('humidity').textContent = `${data.main.humidity}%`;
-    document.getElementById('wind').textContent = `${data.wind.speed} m/s`;
-    document.getElementById('feelsLike').textContent = `${Math.round(data.main.feels_like)}°C`;
 
-    const tempEl = document.getElementById('weatherTemp');
-    const temp = data.main.temp;
-    if (temp < 10) tempEl.style.background = 'linear-gradient(135deg, #60a5fa, #3b82f6)';
-    else if (temp < 25) tempEl.style.background = 'linear-gradient(135deg, #34d399, #10b981)';
-    else tempEl.style.background = 'linear-gradient(135deg, #fbbf24, #f97316)';
-    tempEl.style.webkitBackgroundClip = 'text';
-    tempEl.style.backgroundClip = 'text';
+    // Coordinates
+    const lat = data.coord.lat.toFixed(4);
+    const lon = data.coord.lon.toFixed(4);
+    const latDir = data.coord.lat >= 0 ? 'N' : 'S';
+    const lonDir = data.coord.lon >= 0 ? 'E' : 'W';
+    document.getElementById('coordsText').textContent =
+        `${Math.abs(lat)}° ${latDir}, ${Math.abs(lon)}° ${lonDir}`;
+
+    // Details
+    document.getElementById('humidity').textContent = `${data.main.humidity}%`;
+    document.getElementById('wind').innerHTML = `${data.wind.speed} <small>m/s</small>`;
+    document.getElementById('pressure').innerHTML = `${data.main.pressure} <small>hPa</small>`;
+
+    const visibility = data.visibility ? (data.visibility / 1000).toFixed(1) : '--';
+    document.getElementById('visibility').innerHTML = `${visibility} <small>km</small>`;
 }
 
-function getWeatherEmoji(condition) {
-    const emojis = { 'Clear': '☀️', 'Clouds': '☁️', 'Rain': '🌧️', 'Snow': '❄️', 'Mist': '🌫️', 'Fog': '🌫️', 'Drizzle': '🌦️', 'Thunderstorm': '⛈️' };
-    return emojis[condition] || '🌐';
+function updateSelectedMarker(cityName) {
+    if (selectedMarker) {
+        selectedMarker.children[1].material.color.setHex(0x22d3ee);
+        selectedMarker.children[2].material.color.setHex(0x22d3ee);
+    }
+
+    const found = markers.find(m => m.city.name.toLowerCase() === cityName.toLowerCase());
+    if (found) {
+        selectedMarker = found.mesh;
+        selectedMarker.children[1].material.color.setHex(0x135bec);
+        selectedMarker.children[2].material.color.setHex(0x135bec);
+    }
+}
+
+// ============================================
+// Utilities
+// ============================================
+function latLonToVector3(lat, lon, radius) {
+    const phi = (90 - lat) * (Math.PI / 180);
+    const theta = (lon + 180) * (Math.PI / 180);
+    return new THREE.Vector3(
+        -radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+    );
 }
 
 function flyToCity(lat, lon) {
