@@ -91,7 +91,25 @@ function init() {
         camera.position.z = Math.min(camera.position.z + 0.5, 6);
     });
     document.getElementById('resetView').addEventListener('click', () => {
-        camera.position.set(0, 0, 3.5);
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    flyToCity(latitude, longitude);
+                    // Fetch weather for user's location
+                    fetch(`${API_BASE}/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${API_KEY}`)
+                        .then(res => res.json())
+                        .then(data => updateWeatherCard(data))
+                        .catch(err => console.error(err));
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    alert('Could not get your location. Please enable location access.');
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by your browser.');
+        }
     });
 
     // Auto-rotation control
@@ -210,7 +228,7 @@ function addCityMarkers() {
     MAJOR_CITIES.forEach(city => {
         const marker = createMarker(city.lat, city.lon, city.name);
         markers.push({ mesh: marker, city });
-        scene.add(marker);
+        earth.add(marker); // Add to earth so markers rotate with it
     });
 }
 
