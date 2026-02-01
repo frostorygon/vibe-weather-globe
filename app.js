@@ -399,13 +399,15 @@ function flyToCity(lat, lon) {
     // Stop auto-rotation during animation
     isAnimating = false;
 
-    // Calculate target rotation for Earth so the city faces the camera
-    // Convert lon to Earth's Y rotation (longitude = rotation around Y axis)
+    // Calculate target rotation for Earth so the city faces the camera (positive Z axis)
+    // We need to rotate the city position to face (0, 0, 1)
     const targetRotationY = -lon * (Math.PI / 180) - Math.PI / 2;
+    const targetRotationX = -lat * (Math.PI / 180);
 
+    const startRotationX = earth.rotation.x;
     const startRotationY = earth.rotation.y;
     const startCameraZ = camera.position.z;
-    const targetCameraZ = 3.0; // Zoom in slightly
+    const targetCameraZ = 3.0;
 
     const duration = 1500;
     const startTime = Date.now();
@@ -415,17 +417,17 @@ function flyToCity(lat, lon) {
         const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
 
-        // Rotate Earth to face the city
+        // Rotate Earth on both axes to center the city
+        earth.rotation.x = startRotationX + (targetRotationX - startRotationX) * eased;
         earth.rotation.y = startRotationY + (targetRotationY - startRotationY) * eased;
 
-        // Optionally zoom camera
+        // Zoom camera
         camera.position.z = startCameraZ + (targetCameraZ - startCameraZ) * eased;
         camera.lookAt(0, 0, 0);
 
         if (progress < 1) {
             requestAnimationFrame(animateFly);
         } else {
-            // Resume auto-rotation after a delay
             setTimeout(() => { isAnimating = true; }, 3000);
         }
     }
